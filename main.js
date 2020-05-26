@@ -11,8 +11,15 @@ if (process.env.ENVIRONMENT === 'prod') {
 
 const server = http.createServer((_, res) => {
   res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/plain');
-  res.end('Hello, you have reached mb-service-1! <h1>Test</h1>\n');
+  res.setHeader('Content-Type', 'text/html');
+  res.end('<html lang="en"> \
+  <head> \
+      <title>mb-service-1</title> \
+  </head> \
+  <body> \
+      <h1>Hello, you have reached mb-service-1!</h1> \
+  </body> \
+   </html>');
 });
 
 
