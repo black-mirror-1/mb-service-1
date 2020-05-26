@@ -21,6 +21,8 @@ spec:
         value: tcp://localhost:2375
       - name: GIT_COMMIT
         value: ${env.GIT_COMMIT}
+      - name: BUILD_NUMBER
+        value: ${env.BUILD_NUMBER}
     volumeMounts:
       - name: aws-ecr-creds
         mountPath: /root/.aws/
@@ -59,7 +61,7 @@ spec:
           export DOCKER_API_VERSION=1.24
           docker run --rm -i -v ~/.aws:/root/.aws amazon/aws-cli ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 693885100167.dkr.ecr.us-east-2.amazonaws.com
           docker build -t master-builder/sample-service-1 .
-          docker tag master-builder/sample-service-1:latest 693885100167.dkr.ecr.us-east-2.amazonaws.com/master-builder/sample-service-1:${GIT_COMMIT}
+          docker tag master-builder/sample-service-1:latest 693885100167.dkr.ecr.us-east-2.amazonaws.com/master-builder/sample-service-1:v${BUILD_NUMBER}
           '''
         }
       }
@@ -69,7 +71,7 @@ spec:
         container(name: 'docker') {
           sh '''
           export DOCKER_API_VERSION=1.24
-          docker push 693885100167.dkr.ecr.us-east-2.amazonaws.com/master-builder/sample-service-1:${GIT_COMMIT}
+          docker push 693885100167.dkr.ecr.us-east-2.amazonaws.com/master-builder/sample-service-1:v${BUILD_NUMBER}
           '''
         }
       }
@@ -83,7 +85,7 @@ spec:
             git config --global user.name "${GIT_USERNAME}"
             cd mb-service-1-deploy
             ls -ltr
-            sed -i "s/\\/master-builder\\/sample-service-1\\:.*/\\/master-builder\\/sample-service-1:${GIT_COMMIT}/g" pre-prod/service.yml
+            sed -i "s/\\/master-builder\\/sample-service-1\\:.*/\\/master-builder\\/sample-service-1:v${BUILD_NUMBER}/g" pre-prod/service.yml
             git add pre-prod/service.yml
             git commit -m 'replacing image tag'
             git push https://${GIT_USERNAME}:${URLEncoder.encode(GIT_PASSWORD, "UTF-8")}@github.com/black-mirror-1/mb-service-1-deploy.git
