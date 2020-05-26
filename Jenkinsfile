@@ -57,7 +57,7 @@ spec:
           docker version
           docker run --rm -i -v ~/.aws:/root/.aws amazon/aws-cli ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 693885100167.dkr.ecr.us-east-2.amazonaws.com
           docker build -t master-builder/sample-service-1 .
-          docker tag master-builder/sample-service-1:latest 693885100167.dkr.ecr.us-east-2.amazonaws.com/master-builder/sample-service-1:v3
+          docker tag master-builder/sample-service-1:latest 693885100167.dkr.ecr.us-east-2.amazonaws.com/master-builder/sample-service-1:${env.GIT_COMMIT}
           '''
         }
       }
@@ -68,7 +68,7 @@ spec:
           sh '''
           export DOCKER_API_VERSION=1.24
           docker version
-          docker push 693885100167.dkr.ecr.us-east-2.amazonaws.com/master-builder/sample-service-1:v3
+          docker push 693885100167.dkr.ecr.us-east-2.amazonaws.com/master-builder/sample-service-1:${env.GIT_COMMIT}
           '''
         }
       }
