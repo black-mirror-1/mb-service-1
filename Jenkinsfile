@@ -1,76 +1,77 @@
 pipeline {
   agent {
     kubernetes {
-      label 'jenkins-slave'
+      //cloud 'kubernetes'
       defaultContainer 'jnlp'
+      label 'mb-service-1'
       yaml """
-apiVersion: v1
 kind: Pod
+metadata:
+  name: docker
 spec:
   containers:
-  - name: dind
-    image: docker:18.09-dind
-    securityContext:
-      privileged: true
   - name: docker
-    env:
-    - name: DOCKER_HOST
-      value: 127.0.0.1
-    image: docker:18.09
+    image: docker:latest
+    imagePullPolicy: Always
     command:
     - cat
     tty: true
-  - name: tools
-    image: argoproj/argo-cd-ci-builder:v0.13.1
-    command:
-    - cat
-    tty: true
+    env: 
+      - name: DOCKER_HOST 
+        value: tcp://localhost:2375
+    volumeMounts:
+      - name: aws-ecr-creds
+        mountPath: /root/.aws/
+  - name: dind-daemon 
+    image: docker:1.12.6-dind 
+    resources: 
+        requests: 
+            cpu: 20m 
+            memory: 512Mi 
+    securityContext: 
+        privileged: true 
+    volumeMounts: 
+      - name: docker-graph-storage 
+        mountPath: /var/lib/docker
+  volumes:
+    - name: aws-ecr-creds
+      secret:
+        secretName: aws-ecr-creds
+    - name: docker-graph-storage 
+      emptyDir: {}
 """
     }
   }
   stages {
-
-    stage('Build') {
-      environment {
-        DOCKERHUB_CREDS = credentials('mb-jenkins-ecr')
-      }
+    stage('Pull code from Git') {
       steps {
-        container('docker') {
-          // Build new image
-          sh "until docker ps; do sleep 3; done && docker build -t alexmt/argocd-demo:${env.GIT_COMMIT} ."
-          // Publish new image
-          sh "docker login --username $DOCKERHUB_CREDS_USR --password $DOCKERHUB_CREDS_PSW && docker push alexmt/argocd-demo:${env.GIT_COMMIT}"
+        git 'https://github.com/black-mirror-1/mb-service-1'
+      }
+      
+    }
+    stage('Build with docker') {
+      steps {
+        container(name: 'docker') {
+          sh '''
+          export DOCKER_API_VERSION=1.24
+          docker version
+          docker run --rm -i -v ~/.aws:/root/.aws amazon/aws-cli ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 693885100167.dkr.ecr.us-east-2.amazonaws.com
+          docker build -t master-builder/sample-service-1 .
+          docker tag master-builder/sample-service-1:latest 693885100167.dkr.ecr.us-east-2.amazonaws.com/master-builder/sample-service-1:v3
+          '''
         }
       }
     }
-
-    // stage('Deploy E2E') {
-    //   environment {
-    //     GIT_CREDS = credentials('git')
-    //   }
-    //   steps {
-    //     container('tools') {
-    //       sh "git clone https://$GIT_CREDS_USR:$GIT_CREDS_PSW@github.com/alexmt/argocd-demo-deploy.git"
-    //       sh "git config --global user.email 'ci@ci.com'"
-
-    //       dir("argocd-demo-deploy") {
-    //         sh "cd ./e2e && kustomize edit set image alexmt/argocd-demo:${env.GIT_COMMIT}"
-    //         sh "git commit -am 'Publish new version' && git push || echo 'no changes'"
-    //       }
-    //     }
-    //   }
-    // }
-
-    // stage('Deploy to Prod') {
-    //   steps {
-    //     input message:'Approve deployment?'
-    //     container('tools') {
-    //       dir("argocd-demo-deploy") {
-    //         sh "cd ./prod && kustomize edit set image alexmt/argocd-demo:${env.GIT_COMMIT}"
-    //         sh "git commit -am 'Publish new version' && git push || echo 'no changes'"
-    //       }
-    //     }
-    //   }
-    // }
+    stage('push Image to ECR') {
+      steps {
+        container(name: 'docker') {
+          sh '''
+          export DOCKER_API_VERSION=1.24
+          docker version
+          docker push 693885100167.dkr.ecr.us-east-2.amazonaws.com/master-builder/sample-service-1:v3
+          '''
+        }
+      }
+    }
   }
 }
