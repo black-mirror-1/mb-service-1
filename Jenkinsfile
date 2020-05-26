@@ -76,11 +76,19 @@ spec:
     }
     stage('update Image tag on deploy repo'){
       steps {
-        git 'https://github.com/black-mirror-1/mb-service-1-deploy'
-        cd mb-service-1-deploy
-        sed -i 's/\/master-builder\/sample-service-1\:.*/\/master-builder\/sample-service-1:V124/g' pre-prod/service.yml
-        git add . -m "Jenkins: updating image tag"
-        git push
+        withCredentials([usernamePassword(credentialsId: 'jenkins-github', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+            sh """
+            git clone https://github.com/black-mirror-1/mb-service-1-deploy.git
+            git config --global user.email "you@example.com"
+            git config --global user.name "${GIT_USERNAME}"
+            cd mb-service-1-deploy
+            ls -ltr
+            sed -i "s/\\/master-builder\\/sample-service-1\\:.*/\\/master-builder\\/sample-service-1:${GIT_COMMIT}/g" pre-prod/service.yml
+            git add pre-prod/service.yml
+            git commit -m 'replacing image tag'
+            git push https://${GIT_USERNAME}:${URLEncoder.encode(GIT_PASSWORD, "UTF-8")}@github.com/black-mirror-1/mb-service-1-deploy.git
+            """
+        }
       }
     }
   }
