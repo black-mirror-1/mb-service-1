@@ -55,7 +55,6 @@ spec:
     }
     stage('Build with docker') {
       steps {
-        sh('printenv | sort')
         container(name: 'docker') {
           sh '''
           export DOCKER_API_VERSION=1.24
@@ -84,7 +83,6 @@ spec:
             git config --global user.email "you@example.com"
             git config --global user.name "${GIT_USERNAME}"
             cd mb-service-1-deploy
-            ls -ltr
             sed -i "s/\\/master-builder\\/sample-service-1\\:.*/\\/master-builder\\/sample-service-1:v${BUILD_NUMBER}/g" pre-prod/deployment.yml
             git add pre-prod/deployment.yml
             git commit -m 'replacing image tag'

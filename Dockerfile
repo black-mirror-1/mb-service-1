@@ -1,5 +1,5 @@
 
-FROM node:10.15.3-stretch
+FROM node:alpine
 
 ADD main.js /app/main.js
 
