@@ -51,7 +51,8 @@ spec:
       steps {
         git 'https://github.com/black-mirror-1/mb-service-1'
         sh '''
-        sed -i "s/<h1>Version: V.*/<h1>Version: V${BUILD_NUMBER}</h1>  \/g" mb-service-1/main.js
+        sed -i "s/<h1>Version: V.*/<h1>Version: V${BUILD_NUMBER} <\\/h1>\\\\\\/g" main.js
+        cat main.js
         '''
       }
       
