@@ -61,7 +61,6 @@ spec:
         cat main.js
         '''
       }
-      
     }
     stage('Build with docker') {
       steps {
@@ -73,6 +72,11 @@ spec:
           docker tag ${AMAZON_ECR_NAMESPACE}/${AMAZON_ECR_REPOSITORY}:latest ${AMAZON_ECR_HOST}/${AMAZON_ECR_NAMESPACE}/${AMAZON_ECR_REPOSITORY}:v${BUILD_NUMBER}
           '''
         }
+      }
+    }
+    stage('Unit Tests') {
+      steps {
+        echo "Run Unit tests here"
       }
     }
     stage('push Image to ECR') {
