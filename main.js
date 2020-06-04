@@ -16,8 +16,8 @@ const server = http.createServer((_, res) => {
   <head> \
       <title>mb-service-1</title> \
   </head> \
-  <body> \
-      <h1>Hello, you have reached mb-service-1! Demo</h1> \
+  <body style="background-color:Aquamarine;"> \
+      <h1>Hello, you have reached mb-service-1! </h1> \
       <h1>Version: V1</h1>  \
   </body> \
    </html>');
